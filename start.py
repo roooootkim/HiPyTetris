@@ -1,5 +1,6 @@
 import pygame as pg
 from game import Player
+from game import AI_Player
 from setting import *
 successes, failures = pg.init()
 print("{0} successes and {1} failures in start.py".format(successes, failures))
@@ -64,8 +65,25 @@ def multi_play():
 
 
 def computer_play():
-    print("아직 구현 안함")
-
+    run = True
+    ai_player = AI_Player('center')
+    screen.fill(WHITE)
+    while run:
+        for event in pg.event.get():
+            if event.type == pg.QUIT:
+                run = False
+                pg.display.quit()
+                quit()
+            if event.type == pg.KEYDOWN:
+                if event.key == pg.K_RETURN:
+                    ai_player.env.ai_step()
+        ai_player.env.ai_step()  # 이 line 주석처리 하면 엔터 누를때 마다 한번씩 행동함.
+        ai_player.draw_board(screen)
+        clock.tick(FPS)
+        pg.display.flip()
+        if ai_player.is_game_over():
+            run = False
+            print("게임 오버 구현하기")
 
 def online_play():
     print("아직 구현 안함")

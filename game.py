@@ -1,4 +1,5 @@
 import tetris
+import tetris_gym
 import pygame as pg
 from setting import *
 successes, failures = pg.init()
@@ -80,3 +81,42 @@ class Player:
     def make_multi(player1, player2):
         player1.game.take_enemy(player2.game)
         player2.game.take_enemy(player1.game)
+
+
+class AI_Player:
+    def __init__(self, pos):
+        self.env = tetris_gym.TetrisEnv()
+        self.game = self.env.game
+        self.width = self.game.col * block_size
+        self.height = self.game.row * block_size
+        if pos == 'center':
+            self.x = (size[0] - self.width) // 2
+            self.y = (size[1] - self.height) // 2
+        elif pos == 'right':
+            self.x = (size[0] // 2 - self.width) // 2
+            self.y = (size[1] - self.height) // 2
+        elif pos == 'left':
+            self.x = (size[0] // 2 - self.width) // 2 + size[0] // 2
+            self.y = (size[1] - self.height) // 2
+
+    def draw_board(self, screen):
+        pg.draw.rect(screen, colors[0], [self.x, self.y, self.width, self.height])
+        board = self.game.get_data()
+        d_piece = self.game.get_dropped()
+        d_shape = d_piece.shape[d_piece.rotation]
+        for row in range(self.game.row):
+            for col in range(self.game.col):
+                if board[row][col] != 0:
+                    pg.draw.rect(screen, colors[board[row][col]],
+                                 [self.x + col * block_size, self.y + row * block_size, block_size, block_size])
+        # 떨어질 모양을 예측해서 그려주는 반복문.
+        for i in range(4):
+            for j in range(4):
+                if d_shape[i][j] != 0 and 0 <= d_piece.x + j < self.game.col and 0 <= d_piece.y + i < self.game.row:
+                    if board[d_piece.y + i][d_piece.x + j] == 0:
+                        pg.draw.circle(screen, colors[d_shape[i][j]],
+                                       [self.x + (d_piece.x + j) * block_size + block_size // 2,
+                                        self.y + (d_piece.y + i) * block_size + block_size // 2], block_size // 3)
+
+    def is_game_over(self):
+        return self.game.game_over
