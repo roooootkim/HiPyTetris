@@ -1,5 +1,6 @@
 import tetris
 import random
+import matplotlib.pylab as plt
 from copy import deepcopy
 
 
@@ -31,11 +32,11 @@ class TetrisEnv:
         return [self.rot_action[random.randrange(0, 4)], self.col_action[random.randrange(0, 11)]]
 
     def step(self, action, do=False):
-        height, lines, holes, bumpiness = 0, 0, 0, 0
-        over = 0
-        prev_g = deepcopy(self.game.grid)
-        prev_p = deepcopy(self.game.cur_piece)
-        prev_np = deepcopy(self.game.next_piece)
+        height, lines, holes, bumpiness, over = 0, 0, 0, 0, self.game.game_over
+        cur_action = deepcopy(action)
+        cur_grid = deepcopy(self.game.grid)
+        cur_piece = deepcopy(self.game.cur_piece)
+        cur_next_piece = deepcopy(self.game.next_piece)
         while action[0] >= len(self.game.cur_piece.shape):
             action[0] %= len(self.game.cur_piece.shape)
 
@@ -62,17 +63,16 @@ class TetrisEnv:
                 bumpiness += abs(tmp_height[col - 1] - tmp_height[col])
         self.ob_update()
 
-        if self.game.game_over:
-            over = 1
+        next_grid = deepcopy(self.game.grid)
+        over = self.game.game_over
 
         if not do:
-            self.game.grid = prev_g
-            self.game.cur_piece = prev_p
-            self.game.next_piece = prev_np
+            self.game.grid = cur_grid
+            self.game.cur_piece = cur_piece
+            self.game.next_piece = cur_next_piece
             self.game.game_over = False
-
-        return -0.51 * height + 0.76 * lines + -0.36 * holes + -0.18 * bumpiness + -100 * over
-        # return self.observation, -0.51 * height + 0.76 * lines + -0.36 * holes + -0.18 * bumpiness, self.game.game_over
+        reward = -0.510066 * height + 0.760666 * lines + -0.35663 * holes + -0.184483 * bumpiness + -100 * over
+        return cur_grid, cur_action, reward, next_grid, self.game.game_over
 
     def ai_step(self):
         rl = []
@@ -80,7 +80,7 @@ class TetrisEnv:
         opt_a = [-1, -1]
         for s in range(0, 4):
             for c in range(0, 11):
-                tmp = self.step([self.rot_action[s], self.col_action[c]])
+                _, _, tmp, _, _ = self.step([self.rot_action[s], self.col_action[c]])
                 rl.append(tmp)
                 if tmp >= opt:
                     opt = tmp
@@ -91,12 +91,21 @@ class TetrisEnv:
 
 
 if __name__ == "__main__":
-    game = TetrisEnv()
-    game.reset()
-    step_cnt = 0
-    while not game.ai_step():
-        step_cnt += 1
-        if step_cnt % 100 == 0:
-            print('step : ', step_cnt)
+    length_list = []
+    avg = 0
+    num = 10
+    for i in range(num):
+        game = TetrisEnv()
+        game.reset()
+        step_cnt = 0
+        while not game.ai_step():
+            step_cnt += 1
+        length_list.append(step_cnt)
+        avg += step_cnt
+        print('(', i + 1, '/', num, ') -> step : ', step_cnt)
+    avg /= num
+    print('average : ', avg)
 
-    print('done, step : ', step_cnt)
+    plt.title("Heuristics Algorithm")
+    plt.plot(length_list)
+    plt.show()

@@ -1,59 +1,58 @@
 import socket
-from _thread import * #접속한 클라이언트마다 새로운 쓰레드 생성.
+from _thread import *
 import pickle
 from game import Player
 import pygame as pg
-
-port = 5555
-server = "25.66.112.229"
-
-s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-try:
-    s.bind((server, port))
-except socket.error as e:
-    str(e)
-
-s.listen(2)
-
-print("waiting for a connection....")
-connected = set()
+from setting import *
 key_set = {'right': pg.K_RIGHT, 'left': pg.K_LEFT, 'up': pg.K_UP, 'down': pg.K_DOWN, 'drop': pg.K_SPACE}
-players = [Player('left', key_set), Player('right', key_set)]
+cur_player = 0
+players = [Player('left', key_set, True), Player('right', key_set, True)]
+port = 5555
+clock = pg.time.Clock()
 
 
-def thread_client(conn, player):
-    conn.send(pickle.dumps(players[player]))
-
+def thread_client(conn, player_num):
+    global cur_player
+    players[player_num - 1].start_game()
+    conn.send(pickle.dumps(players[player_num - 1]))
     while True:
         try:
             data = pickle.loads(conn.recv(2048*3))
-            players[player] = data
-
+            players[player_num - 1] = data
             if not data:
                 print("disconnected")
                 break
             else:
-                if player == 1:
-                    reply = players[0]
-                else:
+                if player_num == 1:
                     reply = players[1]
-
-                print("receiving", data)
-                print("sending", reply)
+                else:
+                    reply = players[0]
 
             conn.sendall(pickle.dumps(reply))
         except:
             break
     print("lost connection")
+    cur_player -= 1
     conn.close()
 
 
 if __name__ == "__main__":
-    cur_player = 0
+    server = str(input('서버 IP 입력 : '))
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+    try:
+        s.bind((server, port))
+    except socket.error as e:
+        str(e)
+
+    s.listen(2)
+
+    print("waiting for a connection....")
+
+    connected = set()
+
     while True:
         conn, addr = s.accept()
         print("Connected to:", addr)
-
-        start_new_thread(thread_client, (conn, cur_player))
         cur_player += 1
+        start_new_thread(thread_client, (conn, cur_player))

@@ -7,32 +7,52 @@ print("{0} successes and {1} failures in game.py".format(successes, failures))
 
 
 class Player:
-    def __init__(self, pos, key_dic):
+    def __init__(self, pos, key_dic, waiting_state=False):
         self.game = tetris.Board()
         self.width = self.game.col * block_size
         self.height = self.game.row * block_size
-        if pos == 'center':
-            self.x = (size[0] - self.width) // 2
-            self.y = (size[1] - self.height) // 2
-        elif pos == 'right':
-            self.x = (size[0] // 2 - self.width) // 2
-            self.y = (size[1] - self.height) // 2
-        elif pos == 'left':
-            self.x = (size[0] // 2 - self.width) // 2 + size[0] // 2
-            self.y = (size[1] - self.height) // 2
-        else:
-            print("pos 잘못넣음")
+        self.x, self.y, self.px, self.py, self.draw_next_piece = self.set_pos(pos)
         self.speed = 3
         self.key_set = key_dic
         self.key_count = {'right': -1, 'left': -1, 'up': -1, 'down': -1, 'drop': -1}
         self.key_speed = {'right': FPS // 10, 'left': FPS // 10, 'up': FPS // 3, 'down': FPS // 15, 'drop': FPS // 2}
         self.fall_time = FPS
+        self.waiting_state = waiting_state
+
+    def set_pos(self, pos):
+        self.draw_next_piece = True
+        if pos == 'center':
+            self.x = (size[0] - self.width) // 2
+            self.y = (size[1] - self.height) // 2
+            self.px = self.x - block_size * 5
+            self.py = self.y + bezel
+        elif pos == 'left':
+            self.x = (size[0] // 2 - self.width) // 2 + block_size * 3
+            self.y = (size[1] - self.height) // 2
+            self.px = self.x - block_size * 5
+            self.py = self.y + bezel
+        elif pos == 'right':
+            self.x = (size[0] // 2 - self.width) // 2 + size[0] // 2 - block_size * 3
+            self.y = (size[1] - self.height) // 2
+            self.px = self.x + self.width + block_size
+            self.py = self.y + bezel
+
+        return self.x, self.y, self.px, self.py, self.draw_next_piece
 
     def draw_board(self, screen):
-        pg.draw.rect(screen, colors[0], [self.x, self.y, self.width, self.height])
         board = self.game.get_data()
         d_piece = self.game.get_dropped()
         d_shape = d_piece.shape[d_piece.rotation]
+        next_shape = self.game.next_piece.shape[self.game.next_piece.rotation]
+
+        pg.draw.rect(screen, colors[0], [self.x, self.y, self.width, self.height])
+
+        if self.waiting_state:
+            font = pg.font.SysFont("arial", 30, True, False)
+            txt_surface = font.render("Player waiting...", True, colors[1])
+            screen.blit(txt_surface, (self.x, self.y))
+            return
+
         for row in range(self.game.row):
             for col in range(self.game.col):
                 if board[row][col] != 0:
@@ -46,6 +66,14 @@ class Player:
                         pg.draw.circle(screen, colors[d_shape[i][j]],
                                        [self.x + (d_piece.x + j) * block_size + block_size // 2,
                                         self.y + (d_piece.y + i) * block_size + block_size // 2], block_size // 3)
+        # next_piece 를 그려줌
+        if self.draw_next_piece:
+            pg.draw.rect(screen, colors[-1],
+                         [self.px - bezel, self.py - bezel, block_size * 4 + bezel * 2, block_size * 4 + bezel * 2])
+            for i in range(4):
+                for j in range(4):
+                    pg.draw.rect(screen, colors[next_shape[i][j]],
+                                 [self.px + j * block_size, self.py + i * block_size, block_size, block_size])
 
     def key_input(self, event):
         if event.type == pg.KEYDOWN:
@@ -81,6 +109,12 @@ class Player:
     def make_multi(player1, player2):
         player1.game.take_enemy(player2.game)
         player2.game.take_enemy(player1.game)
+
+    def start_game(self):
+        self.waiting_state = False
+
+    def is_waiting(self):
+        return self.waiting_state
 
 
 class AI_Player:

@@ -1,4 +1,5 @@
 import pygame as pg
+from network import *
 from game import Player
 from game import AI_Player
 from setting import *
@@ -85,8 +86,84 @@ def computer_play():
             run = False
             print("게임 오버 구현하기")
 
-def online_play():
-    print("아직 구현 안함")
+
+def online_room():
+    run = True
+    input_box = pg.Rect(size[0] / 2 - 200, size[1] / 2 - 16, 400, 32)
+    font1 = pg.font.SysFont("arial", 30, True, False)
+    font2 = pg.font.Font(None, 32)
+    address_txt = ''
+    backspace = False
+    delay_count = 0
+    while run:
+        for event in pg.event.get():
+            if event.type == pg.QUIT:
+                run = False
+                pg.display.quit()
+                quit()
+            if event.type == pg.KEYDOWN:
+                if event.key == pg.K_RETURN:
+                    run = False
+                elif event.key == pg.K_BACKSPACE:
+                    backspace = True
+                    delay_count = 0
+                else:
+                    address_txt += event.unicode
+            if event.type == pg.KEYUP:
+                if event.key == pg.K_BACKSPACE:
+                    backspace = False
+                    delay_count = 0
+
+        if backspace:
+            if delay_count == 0 or delay_count >= 10:
+                address_txt = address_txt[:-1]
+            delay_count += 1
+
+        screen.fill(WHITE)
+        txt_surface1 = font1.render("Enter the server address", True, BLACK)
+        txt_surface2 = font2.render(address_txt, True, BLACK)
+        input_box.w = max(input_box.w, txt_surface2.get_width() + 10)
+        screen.blit(txt_surface1, (input_box.x + 5, input_box.y - 50))
+        screen.blit(txt_surface2, (input_box.x + 5, input_box.y + 5))
+        pg.draw.rect(screen, BLACK, input_box, 2)
+
+        pg.display.flip()
+        clock.tick(FPS)
+
+    run = True
+    network = Network(address_txt)
+    online_play(network)
+
+
+def online_play(network):
+    run = True
+    p1 = network.getp()
+    screen.fill(WHITE)
+    while run:
+        p2 = network.send(p1)
+
+        for event in pg.event.get():
+            if event.type == pg.QUIT:
+                run = False
+                pg.display.quit()
+                quit()
+            if not p2.is_waiting():
+                p1.key_input(event)
+
+        if not p2.is_waiting():
+            p1.move_piece()
+            p1.fall_time_check()
+
+        p1.draw_board(screen)
+        p2.draw_board(screen)
+        pg.display.update()
+
+        clock.tick(FPS)
+        pg.display.flip()
+
+        if p1.is_game_over() or p2.is_game_over():
+            run = False
+            print("게임 오버 구현하기")
 
 
 def main_menu():
@@ -112,7 +189,7 @@ def main_menu():
                     if cur_menu == 2:
                         computer_play()
                     if cur_menu == 3:
-                        online_play()
+                        online_room()
                     elif cur_menu == 4:
                         run = False
                         pg.display.quit()
