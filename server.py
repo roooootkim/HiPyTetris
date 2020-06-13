@@ -33,6 +33,10 @@ def thread_client(conn, player_num):
             break
     print("lost connection")
     cur_player -= 1
+    if player_num == 1:
+        players[player_num - 1] = Player('left', key_set, True)
+    elif player_num == 2:
+        players[player_num - 1] = Player('right', key_set, True)
     conn.close()
 
 
@@ -52,7 +56,8 @@ if __name__ == "__main__":
     connected = set()
 
     while True:
-        conn, addr = s.accept()
-        print("Connected to:", addr)
-        cur_player += 1
-        start_new_thread(thread_client, (conn, cur_player))
+        while cur_player < 2:
+            conn, addr = s.accept()
+            print("Connected to:", addr)
+            cur_player += 1
+            start_new_thread(thread_client, (conn, cur_player))

@@ -39,8 +39,8 @@ def multi_play():
     run = True
     key_set1 = {'right': pg.K_RIGHT, 'left': pg.K_LEFT, 'up': pg.K_UP, 'down': pg.K_DOWN, 'drop': pg.K_RETURN}
     key_set2 = {'right': pg.K_d, 'left': pg.K_a, 'up': pg.K_w, 'down': pg.K_s, 'drop': pg.K_SPACE}
-    player1 = Player('left', key_set1)
-    player2 = Player('right', key_set2)
+    player1 = Player('right', key_set1)
+    player2 = Player('left', key_set2)
     Player.make_multi(player1, player2)
     screen.fill(WHITE)
     while run:
@@ -130,7 +130,6 @@ def online_room():
         pg.display.flip()
         clock.tick(FPS)
 
-    run = True
     network = Network(address_txt)
     online_play(network)
 
@@ -141,6 +140,13 @@ def online_play(network):
     screen.fill(WHITE)
     while run:
         p2 = network.send(p1)
+
+        p1.init_attack_count()
+
+        if p2.attack_count != 0:
+            print(p2.attack_count)
+            p1.online_attacked(p2.attack_count)
+            p2.init_attack_count()
 
         for event in pg.event.get():
             if event.type == pg.QUIT:
@@ -153,6 +159,7 @@ def online_play(network):
         if not p2.is_waiting():
             p1.move_piece()
             p1.fall_time_check()
+            p1.cal_attack_count()
 
         p1.draw_board(screen)
         p2.draw_board(screen)
@@ -162,6 +169,7 @@ def online_play(network):
         pg.display.flip()
 
         if p1.is_game_over() or p2.is_game_over():
+            network.send(p1)
             run = False
             print("게임 오버 구현하기")
 

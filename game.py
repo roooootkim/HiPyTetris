@@ -18,6 +18,7 @@ class Player:
         self.key_speed = {'right': FPS // 10, 'left': FPS // 10, 'up': FPS // 3, 'down': FPS // 15, 'drop': FPS // 2}
         self.fall_time = FPS
         self.waiting_state = waiting_state
+        self.attack_count = 0
 
     def set_pos(self, pos):
         self.draw_next_piece = True
@@ -110,11 +111,28 @@ class Player:
         player1.game.take_enemy(player2.game)
         player2.game.take_enemy(player1.game)
 
+    # ... method for online_play ... #
     def start_game(self):
         self.waiting_state = False
 
     def is_waiting(self):
         return self.waiting_state
+
+    def cal_attack_count(self):
+        self.attack_count += self.game.attack_stack
+
+    def init_attack_count(self):
+        self.attack_count = 0
+        self.game.init_attack_stack()
+
+    def check_attack_count(self):
+        if self.attack_count != 0:
+            return True
+        else:
+            return False
+
+    def online_attacked(self, stack):
+        self.game.attacked(stack)
 
 
 class AI_Player:

@@ -60,6 +60,7 @@ class Board:
         self.cur_piece = self.get_piece()
         self.enemy = None
         self.game_over = False
+        self.attack_stack = 0
 
     def get_piece(self):
         return Piece(-3, int(self.col / 2 - 2), random.choice(shapes))
@@ -143,15 +144,15 @@ class Board:
         self.next_piece = self.get_piece()
 
         # 줄 차있으면 삭제
-        attack_stack = 0
+        self.init_attack_stack()
         for r in range(self.row):
             if self.grid[r].count(0) == 0:
                 del self.grid[r]
                 self.grid.insert(0, [0 for col in range(self.col)])
-                attack_stack += 1
+                self.attack_stack += 1
         if self.enemy is not None:
-            self.attack(self.enemy, attack_stack)
-        return attack_stack
+            self.attack(self.enemy, self.attack_stack)
+        return self.attack_stack
 
     def take_enemy(self, player):
         self.enemy = player
@@ -172,3 +173,6 @@ class Board:
 
         if not self.valid_space(self.cur_piece.x, self.cur_piece.y, self.cur_piece.shape, self.cur_piece.rotation):
             self.cur_piece.move_up(stack)
+
+    def init_attack_stack(self):
+        self.attack_stack = 0
