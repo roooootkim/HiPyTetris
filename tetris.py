@@ -61,6 +61,7 @@ class Board:
         self.enemy = None
         self.game_over = False
         self.attack_stack = 0
+        self.line_score = 0
 
     def get_piece(self):
         return Piece(-3, int(self.col / 2 - 2), random.choice(shapes))
@@ -112,15 +113,17 @@ class Board:
                         if self.valid_space(self.cur_piece.x + i * dx, self.cur_piece.y + i * dy, self.cur_piece.shape,
                                             (self.cur_piece.rotation + 1) % len(self.cur_piece.shape)):
                             self.cur_piece.rotate(i * dx, i * dy)
-                            return
+                            return -1
         elif key == 'down':
             if self.valid_space(self.cur_piece.x, self.cur_piece.y + 1, self.cur_piece.shape, self.cur_piece.rotation):
                 self.cur_piece.descend()
             else:
-                self.update_grid()
+                return self.update_grid()
         elif key == 'drop':
             self.cur_piece.descend(self.drop_check())
             return self.update_grid()
+
+        return -1
 
     def get_data(self):
         ret_grid = deepcopy(self.grid)
@@ -152,6 +155,8 @@ class Board:
                 self.attack_stack += 1
         if self.enemy is not None:
             self.attack(self.enemy, self.attack_stack)
+
+        self.line_score += self.attack_stack
         return self.attack_stack
 
     def take_enemy(self, player):

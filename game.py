@@ -101,10 +101,14 @@ class Player:
         self.fall_time -= self.speed
         if self.fall_time <= 0:
             self.fall_time = FPS
-            self.game.control('down')
+            return self.game.control('down')
+        return -1
 
     def is_game_over(self):
         return self.game.game_over
+
+    def get_score(self):
+        return self.game.line_score
 
     @staticmethod
     def make_multi(player1, player2):
@@ -135,40 +139,28 @@ class Player:
         self.game.attacked(stack)
 
 
-class AI_Player:
+class AI_Player(Player):
     def __init__(self, pos):
+        Player.__init__(self, pos, {})
         self.env = tetris_gym.TetrisEnv()
+        self.env.reset()
         self.game = self.env.game
         self.width = self.game.col * block_size
         self.height = self.game.row * block_size
-        if pos == 'center':
-            self.x = (size[0] - self.width) // 2
-            self.y = (size[1] - self.height) // 2
-        elif pos == 'right':
-            self.x = (size[0] // 2 - self.width) // 2
-            self.y = (size[1] - self.height) // 2
-        elif pos == 'left':
-            self.x = (size[0] // 2 - self.width) // 2 + size[0] // 2
-            self.y = (size[1] - self.height) // 2
+        self.x, self.y, self.px, self.py, self.draw_next_piece = self.set_pos(pos)
+        self.speed = 10
+        self.find_col()
 
-    def draw_board(self, screen):
-        pg.draw.rect(screen, colors[0], [self.x, self.y, self.width, self.height])
-        board = self.game.get_data()
-        d_piece = self.game.get_dropped()
-        d_shape = d_piece.shape[d_piece.rotation]
-        for row in range(self.game.row):
-            for col in range(self.game.col):
-                if board[row][col] != 0:
-                    pg.draw.rect(screen, colors[board[row][col]],
-                                 [self.x + col * block_size, self.y + row * block_size, block_size, block_size])
-        # 떨어질 모양을 예측해서 그려주는 반복문.
-        for i in range(4):
-            for j in range(4):
-                if d_shape[i][j] != 0 and 0 <= d_piece.x + j < self.game.col and 0 <= d_piece.y + i < self.game.row:
-                    if board[d_piece.y + i][d_piece.x + j] == 0:
-                        pg.draw.circle(screen, colors[d_shape[i][j]],
-                                       [self.x + (d_piece.x + j) * block_size + block_size // 2,
-                                        self.y + (d_piece.y + i) * block_size + block_size // 2], block_size // 3)
+    def find_col(self):
+        tmp = self.game.enemy
+        self.game.enemy = None
+        self.env.ai_step(True, False)
+        self.game.enemy = tmp
+
+    def fall_time_check(self):
+        check = super(AI_Player, self).fall_time_check()
+        if check != -1:
+            self.find_col()
 
     def is_game_over(self):
         return self.game.game_over

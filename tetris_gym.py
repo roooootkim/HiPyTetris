@@ -31,7 +31,7 @@ class TetrisEnv:
     def rand_act(self):
         return [self.rot_action[random.randrange(0, 4)], self.col_action[random.randrange(0, 11)]]
 
-    def step(self, action, do=False):
+    def step(self, action, do=False, drop=True):
         height, lines, holes, bumpiness, over = 0, 0, 0, 0, self.game.game_over
         cur_action = deepcopy(action)
         cur_grid = deepcopy(self.game.grid)
@@ -71,10 +71,20 @@ class TetrisEnv:
             self.game.cur_piece = cur_piece
             self.game.next_piece = cur_next_piece
             self.game.game_over = False
+
+        if do and not drop:
+            self.game.grid = cur_grid
+            self.game.cur_piece = cur_piece
+            self.game.cur_piece.rotation = action[0]
+            self.game.cur_piece.x = action[1]
+            self.game.cur_piece.y = -4
+            self.game.next_piece = cur_next_piece
+            self.game.game_over = False
+
         reward = -0.510066 * height + 0.760666 * lines + -0.35663 * holes + -0.184483 * bumpiness + -100 * over
         return cur_grid, cur_action, reward, next_grid, self.game.game_over
 
-    def ai_step(self):
+    def ai_step(self, do=True, drop=True):
         rl = []
         opt = float('-inf')
         opt_a = [-1, -1]
@@ -86,7 +96,7 @@ class TetrisEnv:
                     opt = tmp
                     opt_a[0] = s
                     opt_a[1] = c
-        self.step([self.rot_action[opt_a[0]], self.col_action[opt_a[1]]], True)
+        self.step([self.rot_action[opt_a[0]], self.col_action[opt_a[1]]], do, drop)
         return self.game.game_over
 
 
