@@ -4,6 +4,15 @@ import pickle
 from game import Player
 import pygame as pg
 from setting import *
+
+'''
+server.py
+작성자: 2017038015신윤성
+서버를 생성하는 파일. socket모듈을 이용해 서버를 생성하고, 클라이언트가 그 서버에 접속한다.
+접속이 확인되면 스레드를 생성해 플레이어 한 명당 한 개씩 스레드를 가지고 플레이한다.
+reply가 상대방을 의미한다. reply객체를 상대에게 보냄으로써 상대의 상태를 화면에 그릴 수 있다.
+'''
+
 key_set = {'right': pg.K_RIGHT, 'left': pg.K_LEFT, 'up': pg.K_UP, 'down': pg.K_DOWN, 'drop': pg.K_SPACE}
 cur_player = 0
 players = [Player('left', key_set, True), Player('right', key_set, True)]

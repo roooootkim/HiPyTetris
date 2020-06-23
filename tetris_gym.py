@@ -3,7 +3,15 @@ import random
 import matplotlib.pylab as plt
 from copy import deepcopy
 
+'''
+Tetris_gym.py
+작성자 : 김근호
 
+테트리스 ai 플레이를 위해 작성 된 모듈입니다.
+테트리스 게임을 플레이하여 가장 높은 reward를 반환하는 action을 구해서 행동합니다.
+
+이 모듈을 main으로 실행할 경우 matplotlib 패키지를 통해 10번의 게임 결과 ai의 생존 길이를 표로 출력합니다.
+'''
 class TetrisEnv:
     def __init__(self):
         self.game = None

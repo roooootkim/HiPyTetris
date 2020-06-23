@@ -5,7 +5,14 @@ from setting import *
 successes, failures = pg.init()
 print("{0} successes and {1} failures in game.py".format(successes, failures))
 
+'''
+game.py
+작성자 : 김근호
+화면출력과 키보드 입력을 위한 Player class와
+Player클래스를 상속받아 작성한 AI_Player class 입니다. 
 
+화면 출력과 키보드 입력, 두 Player 객체를 멀티로 만들기, 스코어 반환 함수등을 지원합니다.
+'''
 class Player:
     def __init__(self, pos, key_dic, waiting_state=False):
         self.game = tetris.Board()
